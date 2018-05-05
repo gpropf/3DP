@@ -5,85 +5,141 @@ partGap = 0.2;
 buttonH = 7;
 lobesH = 3;
 lobeR = 10;
-outerR = 15;
-partSeparationDistance = 10;
+outerR = 14;
+partSeparationDistance = 15;
 shaftR = 3;
-shaftH = 2.0;
-lobeOrbitR = 2;
+shaftH = 4.0;
+lobeOrbitR = 8;
 knobH = 3;
 dialR = outerR + 3;
 chamferFlare = 0.45;
-chamferH = 3.0;
+chamferTaper = 0.5;
+chamferH = 1.0;
 knobVerticalDisplacement = 1.5;
 //cutoutScale = 1.05;
-cutoutGap = 0.3;
-numLobes = 4;
-//sphere(r=cutoutGap);
+partClearance = 0.3;
+camClearance = 0.1;
+numLobes = 6;
+flexbarGap = 1;
+flexbarXAdjustment = -2;
+fudgeFactor = 0.001;
+
+
+productionPositions = true;
+//productionPositions = false;
+
+sideAngle = 360/numLobes;
+//sphere(r=partClearance);
 //completeButton(showTogether = true);
+//completeButton(showTogether = true, numLobes = 6, lobeOrbitR = lobeOrbitR);
+
+axleR = 4.5;
 completeButton(showTogether = false, numLobes = 6, lobeOrbitR = lobeOrbitR);
 //completeButton(showTogether = true, numLobes = 6, lobeOrbitR = lobeOrbitR);
+//cylinder(r=axleR,h=lobesH,$fa=(360/numLobes));
+
+//
 
 totalKnobHeight = chamferH + shaftH + lobesH + knobH + partGap;
 
-chamferInterference = shaftR + chamferFlare - (shaftR + cutoutGap);
+
+chamferInterference = shaftR + chamferFlare - (shaftR + partClearance);
 echo ("Chamfer interference thickness:", chamferInterference);
+
+module slipLock(flexbarL=10,flexbarW=2,flexbarH=2,flexbarGap=0,partClearance=0, axleR=0,h = 0, numSides = 0) {
+     angleStep = 360/numSides;
+     flexbarR = axleR*cos(sideAngle/2);
+     for (angle = [0:angleStep:360]) {
+	 
+	       rotate([0,0,angle])
+		     translate([flexbarXAdjustment,flexbarR,flexbarGap])
+	       cube([flexbarL,flexbarW,flexbarH-flexbarGap]);
+     }
+     difference() {
+	  cylinder(r=outerR, h = flexbarH);
+	  translate([0,0,-cleanCut/2])
+	       cylinder(r=outerR * 0.8, h = flexbarH+cleanCut);
+     }
+}
 
 
 module completeButton(showTogether=false, numLobes = 6, lobeOrbitR = 6) {
 
      
-     buttonBase(cutoutGap=cutoutGap, outerR=outerR,baseH = buttonH, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+     buttonBase(partClearance=partClearance, outerR=outerR,baseH = buttonH, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
   
      // translate([0,0,lobesH+partGap])
      //knob();
 
      if (showTogether) {
 	  translate([0,0,knobVerticalDisplacement]) {
-	       lobes(cutoutGap=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
-	       *lobes(cutoutGap=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	       lobes(partClearance=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	       *lobes(partClearance=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
 	  }
      }
      else {
-	  translate([2*outerR + partSeparationDistance,0,totalKnobHeight]) {
+	  xOffset = 0;
+	  zOffset = 0;
+	  if (productionPositions) {
+	        translate([2*outerR + partSeparationDistance,0,totalKnobHeight])
 	       rotate([0,180,0])
-	       	       lobes(cutoutGap=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+		    lobes(partClearance=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);	     	       
 	  }
+	  else {
+	          translate([2*outerR + partSeparationDistance,0,knobVerticalDisplacement])
+//	       rotate([0,180,0])
+	   		    lobes(partClearance=0, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	  }
+//	  translate([xOffset,0,zOffset]) {
+//	       rotate([0,180,0])
+
+//	  }
+
      }
      //lobes(lobeR=lobeR,mainR=lobeOrbitR,h=lobesH+partGap);
   
 }
 //lobes(mainR=4);
 
-module lobes2(cutoutGap = 0, numLobes = 6, lobeOrbitR = 4) {
+module lobes2(partClearance = 0, numLobes = 6, lobeOrbitR = 4, lobeR = 0) {
      angleStep = 360 / numLobes;
      // Chamfer
      for (t = [0:angleStep:360]) {
 	  rotate([0,0,t])
-	       translate([0,lobeOrbitR,-cutoutGap])
-	       cylinder(r=lobeR+cutoutGap, h=lobesH+cleanCut+partGap + 2 * cutoutGap);
+	       translate([0,lobeOrbitR,-partClearance])
+	       cylinder(r=lobeR+partClearance, h=lobesH+cleanCut+partGap + 2 * partClearance);
      }
 }
 
-module lobes(cutoutGap = 0, numLobes = 6, lobeOrbitR = 4) {
+
+module stepperCam(lobesH = 0, axleR = 0)
+{
+     linear_extrude(height=lobesH+partGap, scale=[1,1], slices=20, twist=0)
+	  polygon([ for (a = [sideAngle/2 : sideAngle : 359]) [ axleR * sin(a), axleR * cos(a) ] ]);
+}
+
+module lobes(partClearance = 0, numLobes = 6, lobeOrbitR = 4) {
      angleStep = 360 / numLobes;
      // Chamfer
-     translate([0,0,-cutoutGap])
-     cylinder(r1=shaftR+cutoutGap, r2 = shaftR + chamferFlare+cutoutGap, h = chamferH + cleanCut + 2*cutoutGap);
+     translate([0,0,-partClearance])
+     cylinder(r1=shaftR+partClearance-chamferTaper, r2 = shaftR + chamferFlare+partClearance, h = chamferH + cleanCut + 2*partClearance);
 
      // Shaft
      translate([0,0,chamferH]) {
-	  translate([0,0,-cutoutGap])
-	  cylinder(r = shaftR+cutoutGap, h = shaftH + cleanCut + 2 * cutoutGap);
+	  translate([0,0,-partClearance])
+	  cylinder(r = shaftR+partClearance, h = shaftH + cleanCut + 2 * partClearance);
 
 	  
 	  translate([0,0,shaftH]) {            
 	       // This is the multi-lobed section that
 	       // provides the stepping feature.
-	       lobes2(cutoutGap = cutoutGap, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+//	       lobes2(partClearance = partClearance, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	      stepperCam(lobesH = lobesH, axleR = axleR);
 	       
 	       // The very top section that you manipulate.
-	       translate([0,0,lobesH+partGap-cutoutGap])            
-		    cylinder(r = dialR+cutoutGap, h = knobH + 2 * cutoutGap);
+	       translate([0,0,lobesH+partGap-partClearance])
+		    lobes2(partClearance = 0, numLobes = 4, lobeOrbitR = 8, lobeR = lobeR);
+//		    cylinder(r = dialR+partClearance, h = knobH + 2 * partClearance);
 	  }
         
      } 
@@ -98,19 +154,23 @@ module lobes(cutoutGap = 0, numLobes = 6, lobeOrbitR = 4) {
 
 */
 
-module buttonBase(cutoutGap = 0, numLobes = 6, lobeOrbitR = 4, outerR=15, lobesH = lobesH, baseH = 10) {
-     baseH =  chamferH+shaftH+lobesH+knobVerticalDisplacement;
+module buttonBase(partClearance = 0, numLobes = 6, lobeOrbitR = 4, outerR=15, lobesH = lobesH, baseH = 10) {
+     baseH =  chamferH+shaftH+knobVerticalDisplacement-0.0;
      difference() {
 	  
 	  // translate([0,0,lobesH-baseH])
 	  cylinder (r=outerR,h=baseH);
-	  translate([0,0,knobVerticalDisplacement])
+	  translate([0,0,knobVerticalDisplacement+fudgeFactor])
 	       //scale(cutoutScale)
-	       lobes(cutoutGap = cutoutGap, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	       lobes(partClearance = partClearance, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
 	  //      lobes(lobeR=lobeR,mainR=mainR);
      }
+     translate([0,0,baseH]) {
+	  slipLock(flexbarL=13,flexbarW=1,flexbarH=lobesH,flexbarGap=flexbarGap,partClearance=0,axleR=axleR+camClearance,h=lobesH,numSides=3);
+	  //stepperCam(lobesH = lobesH, axleR = axleR);
+     }
      difference() {
-	  lobes2(lobeOrbitR = outerR - 3 * (lobeR / 4),h=baseH/2, numLobes = 8 );
+	  lobes2(lobeOrbitR = lobeOrbitR,h=baseH/2, numLobes = 4 ,lobeR = lobeR);
 	  cylinder (r=outerR/2,h=baseH);
      }
 }
