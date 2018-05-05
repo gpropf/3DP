@@ -34,6 +34,11 @@ sideAngle = 360/numLobes;
 //completeButton(showTogether = true, numLobes = 6, lobeOrbitR = lobeOrbitR);
 
 axleR = 4.5;
+
+toothAngle = 15;
+toothHeight = 1;
+
+
 completeButton(showTogether = false, numLobes = 6, lobeOrbitR = lobeOrbitR);
 //completeButton(showTogether = true, numLobes = 6, lobeOrbitR = lobeOrbitR);
 //cylinder(r=axleR,h=lobesH,$fa=(360/numLobes));
@@ -45,6 +50,25 @@ totalKnobHeight = chamferH + shaftH + lobesH + knobH + partGap;
 
 chamferInterference = shaftR + chamferFlare - (shaftR + partClearance);
 echo ("Chamfer interference thickness:", chamferInterference);
+
+//translate([70,0,0])
+//ratchet();
+
+
+module ratchet() {
+angleStep = toothAngle;
+     for (t = [0:angleStep:360]) {
+	  rotate([0,0,t])
+
+     
+     linear_extrude(height = lobesH) {
+	  polygon(points=[[0,0],[0,lobeOrbitR+toothHeight],[sin(toothAngle)*lobeOrbitR,cos(toothAngle)*lobeOrbitR]]);
+     }
+}
+
+}
+
+
 
 module slipLock(flexbarL=10,flexbarW=2,flexbarH=2,flexbarGap=0,partClearance=0, axleR=0,h = 0, numSides = 0) {
      angleStep = 360/numSides;
@@ -114,8 +138,11 @@ module lobes2(partClearance = 0, numLobes = 6, lobeOrbitR = 4, lobeR = 0) {
 
 module stepperCam(lobesH = 0, axleR = 0)
 {
-     linear_extrude(height=lobesH+partGap, scale=[1,1], slices=20, twist=0)
+
+      ratchet();
+/*     linear_extrude(height=lobesH+partGap, scale=[1,1], slices=20, twist=0)
 	  polygon([ for (a = [sideAngle/2 : sideAngle : 359]) [ axleR * sin(a), axleR * cos(a) ] ]);
+	  */
 }
 
 module lobes(partClearance = 0, numLobes = 6, lobeOrbitR = 4) {
@@ -135,7 +162,7 @@ module lobes(partClearance = 0, numLobes = 6, lobeOrbitR = 4) {
 	       // provides the stepping feature.
 //	       lobes2(partClearance = partClearance, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
 	      stepperCam(lobesH = lobesH, axleR = axleR);
-	       
+	      
 	       // The very top section that you manipulate.
 	       translate([0,0,lobesH+partGap-partClearance])
 		    lobes2(partClearance = 0, numLobes = 4, lobeOrbitR = 8, lobeR = lobeR);
