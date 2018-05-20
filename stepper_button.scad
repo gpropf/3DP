@@ -12,7 +12,8 @@ shaftH = 4.0;
 lobeOrbitR = 8;
 knobH = 3;
 dialR = outerR + 3;
-chamferFlare = 0.45;
+//chamferFlare = 0.45;
+chamferFlare = 0;
 chamferTaper = 0.5;
 chamferH = 1.0;
 knobVerticalDisplacement = 1.5;
@@ -21,7 +22,8 @@ partClearance = 0.3;
 camClearance = 0.1;
 numLobes = 6;
 flexbarGap = 1;
-flexbarXAdjustment = -2;
+flexbarXAdjustment = 1;
+flexbarFollowHeight = -0.0; // How high above the lowest point on the teeth should the follower be.
 fudgeFactor = 0.001;
 
 
@@ -34,9 +36,10 @@ sideAngle = 360/numLobes;
 //completeButton(showTogether = true, numLobes = 6, lobeOrbitR = lobeOrbitR);
 
 axleR = 4.5;
+ratchetR = 6;
 
-toothAngle = 15;
-toothHeight = 1;
+toothAngle = 30;
+toothHeight = 1.5;
 
 
 completeButton(showTogether = false, numLobes = 6, lobeOrbitR = lobeOrbitR);
@@ -56,34 +59,43 @@ echo ("Chamfer interference thickness:", chamferInterference);
 
 
 module ratchet() {
-angleStep = toothAngle;
+     angleStep = toothAngle;
      for (t = [0:angleStep:360]) {
 	  rotate([0,0,t])
 
      
-     linear_extrude(height = lobesH) {
-	  polygon(points=[[0,0],[0,lobeOrbitR+toothHeight],[sin(toothAngle)*lobeOrbitR,cos(toothAngle)*lobeOrbitR]]);
+	       linear_extrude(height = lobesH) {
+	       polygon(points=[[0,0],[0,ratchetR],[sin(toothAngle)*(ratchetR+toothHeight)+cleanCut,cos(toothAngle)*(ratchetR+toothHeight)]]);
+	  }
      }
-}
-
 }
 
 
 
 module slipLock(flexbarL=10,flexbarW=2,flexbarH=2,flexbarGap=0,partClearance=0, axleR=0,h = 0, numSides = 0) {
+   
+     %ratchet();
      angleStep = 360/numSides;
-     flexbarR = axleR*cos(sideAngle/2);
+     flexbarR = (ratchetR+flexbarFollowHeight+toothHeight)*cos(sideAngle/2);
      for (angle = [0:angleStep:360]) {
 	 
-	       rotate([0,0,angle])
-		     translate([flexbarXAdjustment,flexbarR,flexbarGap])
-	       cube([flexbarL,flexbarW,flexbarH-flexbarGap]);
+	       rotate([0,0,angle]) {
+		    translate([flexbarXAdjustment,flexbarR,flexbarGap]) {
+			 difference (){
+			      cube([flexbarL,flexbarW,flexbarH-flexbarGap]);
+			      rotate([65,0,0])
+				   translate([-cleanCut/2,0,0])
+				   cube([flexbarL+cleanCut,flexbarW*5,flexbarH-flexbarGap]);
+			 }
+		    }
+	       }
      }
      difference() {
 	  cylinder(r=outerR, h = flexbarH);
 	  translate([0,0,-cleanCut/2])
 	       cylinder(r=outerR * 0.8, h = flexbarH+cleanCut);
      }
+   
 }
 
 
@@ -193,7 +205,7 @@ module buttonBase(partClearance = 0, numLobes = 6, lobeOrbitR = 4, outerR=15, lo
 	  //      lobes(lobeR=lobeR,mainR=mainR);
      }
      translate([0,0,baseH]) {
-	  slipLock(flexbarL=13,flexbarW=1,flexbarH=lobesH,flexbarGap=flexbarGap,partClearance=0,axleR=axleR+camClearance,h=lobesH,numSides=3);
+	  slipLock(flexbarL=9,flexbarW=1.5,flexbarH=lobesH,flexbarGap=flexbarGap,partClearance=0,axleR=axleR+camClearance,h=lobesH,numSides=3);
 	  //stepperCam(lobesH = lobesH, axleR = axleR);
      }
      difference() {
