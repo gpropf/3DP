@@ -12,8 +12,8 @@ shaftH = 4.0;
 lobeOrbitR = 8;
 knobH = 3;
 dialR = outerR + 3;
-//chamferFlare = 0.45;
-chamferFlare = 0;
+chamferFlare = 0.45;
+//chamferFlare = 0;
 chamferTaper = 0.5;
 chamferH = 1.0;
 knobVerticalDisplacement = 1.5;
@@ -22,6 +22,7 @@ partClearance = 0.3;
 camClearance = 0.1;
 numLobes = 6;
 flexbarGap = 1;
+//
 flexbarXAdjustment = 1;
 flexbarFollowHeight = -0.0; // How high above the lowest point on the teeth should the follower be.
 fudgeFactor = 0.001;
@@ -74,7 +75,7 @@ module ratchet() {
 
 module slipLock(flexbarL=10,flexbarW=2,flexbarH=2,flexbarGap=0,partClearance=0, axleR=0,h = 0, numSides = 0) {
    
-     %ratchet();
+    // %ratchet();
      angleStep = 360/numSides;
      flexbarR = (ratchetR+flexbarFollowHeight+toothHeight)*cos(sideAngle/2);
      for (angle = [0:angleStep:360]) {
@@ -83,9 +84,10 @@ module slipLock(flexbarL=10,flexbarW=2,flexbarH=2,flexbarGap=0,partClearance=0, 
 		    translate([flexbarXAdjustment,flexbarR,flexbarGap]) {
 			 difference (){
 			      cube([flexbarL,flexbarW,flexbarH-flexbarGap]);
-			      rotate([65,0,0])
+			      /* rotate([65,0,0])
 				   translate([-cleanCut/2,0,0])
 				   cube([flexbarL+cleanCut,flexbarW*5,flexbarH-flexbarGap]);
+				   */
 			 }
 		    }
 	       }
@@ -199,9 +201,21 @@ module buttonBase(partClearance = 0, numLobes = 6, lobeOrbitR = 4, outerR=15, lo
 	  
 	  // translate([0,0,lobesH-baseH])
 	  cylinder (r=outerR,h=baseH);
-	  translate([0,0,knobVerticalDisplacement+fudgeFactor])
-	       //scale(cutoutScale)
-	       lobes(partClearance = partClearance, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	  union() {
+
+	       translate([0,0,knobVerticalDisplacement+fudgeFactor])
+		    //scale(cutoutScale)
+		    lobes(partClearance = partClearance, numLobes = numLobes, lobeOrbitR = lobeOrbitR);
+	       translate([0,0,baseH-chamferH*1.2])
+		    /* This is a little "sink" for the shaft to allow me to properly
+		    // align the teeth and ratchet followers before squeezing
+		    // everything together. It's to prevent the followers from being
+		    // crushed during that process.
+		    */
+		    //scale(cutoutScale)
+		    cylinder (r=shaftR+chamferFlare*2+partClearance,h=chamferH*2+cleanCut);
+	
+	  }
 	  //      lobes(lobeR=lobeR,mainR=mainR);
      }
      translate([0,0,baseH]) {
