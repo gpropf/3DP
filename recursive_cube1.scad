@@ -1,7 +1,7 @@
-$fn = 50;
-pl = 50; pw =4; ph = pl/8;
+$fn = 150;
+pl = 50; pw =3; ph = pl/8;
 plank = [pl,pw,ph];
-wn = 1;
+wn = 0;
 corner_radius = 2;
 corner_cylinder_height = 8;
 
@@ -56,12 +56,12 @@ module rounded_cube(side,corner_radius) {
 
 module waffle_face(n) {
     face(n);
-    translate([pl,0,0])
-        rotate([0,0,90])
-            face(n);
-    translate([pl,pl,0])
-        rotate([0,0,180])
-            face(n);
+//    translate([pl,0,0])
+//        rotate([0,0,90])
+//            face(n);
+//    translate([pl,pl,0])
+//        rotate([0,0,180])
+//            face(n);
     translate([0,pl,0])
         rotate([0,0,270])
             face(n);
